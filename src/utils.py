@@ -78,3 +78,22 @@ def plot_image(img):
   ax.set_title("image plot")
 
   plt.show()
+
+def convert_image_rgb2gray(img):
+  assert len(img.shape) == 3, "Image has to have 3 channels"
+
+  result = np.zeros(img.shape[:2], np.uint8)
+
+  def clipped_value(values: np.ndarray):
+    clipped = [x for x in values if x <= 255 and x >= 0]
+
+    if len(clipped) == 0:
+      return 0
+
+    return max(clipped)
+
+  for y in range(img.shape[0]):
+    for x in range(img.shape[1]):
+      result[y,x] = clipped_value(img[y,x])
+
+  return result
