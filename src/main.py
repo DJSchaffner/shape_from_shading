@@ -1,9 +1,8 @@
 import cv2
 import imutils
-from matplotlib.pyplot import plot
 import numpy as np
 
-from utils import crop_image_centered, plot_image_realtime, resource_path, show_images, plot_image
+from utils import crop_image_centered, plot_image_realtime, resource_path, show_images, plot_image, convert_image_rgb2gray
 
 """Frankot and Chellappa algorithm. Manually converted from matlab source at https://peterkovesi.com/matlabfns/
 """
@@ -47,7 +46,6 @@ if __name__ == "__main__":
   # Load braille images
   # @TODO loading the images as grayscale right away does the same as (load image color, convert to grayscale, normalize) but
   #       does skip the step of manually filtering the grayscale values
-  # @TODO add image of plane surface for calibration
   topLeftD = cv2.imread(str(resource_path("topLeftD.bmp")), cv2.IMREAD_COLOR)
   topRightD = cv2.imread(str(resource_path("topRightD.bmp")), cv2.IMREAD_COLOR)
   bottomRightD = cv2.imread(str(resource_path("bottomRightD.bmp")), cv2.IMREAD_COLOR)
@@ -108,15 +106,6 @@ if __name__ == "__main__":
 
   # Convert images to grayscale f32 because we need 1 intensity channel for dft
   # @TODO maybe manually do this step to achieve more consistent results (discard values > 255, take max value of remaining channels)
-  '''
-  test = np.zeros(topCropN.shape[:2], np.float32)
-  def rgb2gray(values: np.ndarray):
-    return max([x for x in values if x <= 255])
-
-  for y in range(test.shape[0]):
-    for x in range(test.shape[1]):
-      test[y,x] = rgb2gray(topCropN[y,x])
-  '''
   topCropNG = np.float32(cv2.cvtColor(topCropN, cv2.COLOR_RGB2GRAY))
   rightCropNG = np.float32(cv2.cvtColor(rightCropN, cv2.COLOR_RGB2GRAY))
   bottomCropNG = np.float32(cv2.cvtColor(bottomCropN, cv2.COLOR_RGB2GRAY))
