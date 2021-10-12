@@ -37,10 +37,10 @@ def frankotchellappa(dzdx: np.ndarray, dzdy: np.ndarray):
   # then dividing by the squared frequency.  eps is added to the
   # denominator to avoid division by 0.
   # Equation 21 from paper
-  Z = (-np.lib.scimath.sqrt(-1) * wx * dzdxFFT - np.lib.scimath.sqrt(-1) * wy * dzdyFFT) / \
-      ((wx ** 2) + (wy ** 2) + np.finfo(float).eps)
+  numerator = -1j * wx * np.fft.fft2(dzdx) - 1j * wy * np.fft.fft2(dzdy)
+  denominator =(wx ** 2) + (wy ** 2) + np.finfo(float).eps
 
-  return np.real(np.fft.ifft2(Z))
+  return np.real(np.fft.ifft2(numerator / denominator))
 
 if __name__ == "__main__":
   # Load braille images
