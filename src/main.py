@@ -148,9 +148,19 @@ if __name__ == "__main__":
   # Debug info, display images
   #show_images([dzdx, dzdy])
   
+  # Debug info, normalize and write gradient images
+  dzdxNormalized, dzdxMinValue, dzdxMaxValue = normalize_image(dzdx)
+  dzdyNormalized, dzdyMinValue, dzdyMaxValue = normalize_image(dzdy)
+  
+  cv2.imwrite("out/dzdxNormalized.bmp", dzdxNormalized)
+  cv2.imwrite("out/dzdyNormalized.bmp", dzdyNormalized)
+
+  with open("out/settings.txt", "w+") as f:
+    f.write(f"dzdx: [Min: {dzdxMinValue}| Max: {dzdxMaxValue}]\n")
+    f.write(f"dzdy: [Min: {dzdyMinValue}| Max: {dzdyMaxValue}]\n")
+  
   result = frankotchellappa(dzdx, dzdy)
 
   # Debug info, display images
   #show_images([result])
-  #plot_image(result)
   plot_image_realtime(result)
