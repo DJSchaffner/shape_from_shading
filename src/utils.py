@@ -88,3 +88,11 @@ def convert_image_rgb2gray(img):
     return np.max(np.minimum(np.maximum(values, 0), 255), axis=2)
 
   return clipped_value(img)
+
+
+def normalize_image(img: np.ndarray):
+  minValue = img.min()
+  maxValue = img.max()
+  result = np.float32((img - minValue) * (255 / (maxValue - minValue)))
+
+  return result, minValue, maxValue 
