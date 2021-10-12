@@ -58,18 +58,18 @@ if __name__ == "__main__":
 
   # Rotate images since lights are located at top left, top right,... instead of top, right, ...
   # @TODO instead of rotating, work with diagonal images directly ( (x +- y) / sqrt(2))
-  topD = imutils.rotate(topLeftD, 45)
-  rightD = imutils.rotate(topRightD, 45)
-  bottomD = imutils.rotate(bottomRightD, 45)
-  leftD = imutils.rotate(bottomLeftD, 45)
+  topD = imutils.rotate(topLeftD, -45)
+  rightD = imutils.rotate(topRightD, -45)
+  bottomD = imutils.rotate(bottomRightD, -45)
+  leftD = imutils.rotate(bottomLeftD, -45)
 
-  topW = imutils.rotate(topLeftW, 45)
-  rightW = imutils.rotate(topRightW, 45)
-  bottomW = imutils.rotate(bottomRightW, 45)
-  leftW = imutils.rotate(bottomLeftW, 45)
+  topW = imutils.rotate(topLeftW, -45)
+  rightW = imutils.rotate(topRightW, -45)
+  bottomW = imutils.rotate(bottomRightW, -45)
+  leftW = imutils.rotate(bottomLeftW, -45)
 
   # Debug info, display images
-  #show_images([topD, rightD, bottomD, leftD], 0.5)  
+  show_images([topD, rightD, bottomD, leftD], 0.5)  
 
   # Crop rotated images to the part that interests us (the braille dot)
   topCropD = crop_image_centered(topD, height // 2, height // 2)
