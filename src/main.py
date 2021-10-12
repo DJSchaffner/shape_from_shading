@@ -1,8 +1,9 @@
 import cv2
 import imutils
 import numpy as np
+from numpy.fft import fftfreq
 
-from utils import crop_image_centered, plot_image_realtime, resource_path, show_images, plot_image, convert_image_rgb2gray
+from utils import crop_image_centered, plot_image_realtime, resource_path, show_images, convert_image_rgb2gray, normalize_image
 
 """Frankot and Chellappa algorithm. Manually converted from matlab source at https://peterkovesi.com/matlabfns/
 """
@@ -25,12 +26,9 @@ def frankotchellappa(dzdx: np.ndarray, dzdy: np.ndarray):
   wx = np.fft.ifftshift(wx)
   wy = np.fft.ifftshift(wy)
 
-  # Calculate fast furier transformation
-  dzdxFFT = np.fft.fft2(dzdx)
-  dzdyFFT = np.fft.fft2(dzdy)
-
-  # Debug info, display images
-  #show_images([np.real(dzdxFourier), np.real(dzdyFourier)])
+  # Seems to be an equivalent to shifting
+  #wx, wy = np.meshgrid( np.fft.fftfreq(rows) * 2 * np.pi,
+  #                      np.fft.fftfreq(cols) * 2 * np.pi, indexing="xy")
 
   # Integrate in the frequency domain by phase shifting by pi/2 and
   # weighting the Fourier coefficients by their frequencies in x and y and
@@ -44,8 +42,6 @@ def frankotchellappa(dzdx: np.ndarray, dzdy: np.ndarray):
 
 if __name__ == "__main__":
   # Load braille images
-  # @TODO loading the images as grayscale right away does the same as (load image color, convert to grayscale, normalize) but
-  #       does skip the step of manually filtering the grayscale values
   topLeftD = cv2.imread(str(resource_path("topLeftD.bmp")), cv2.IMREAD_COLOR)
   topRightD = cv2.imread(str(resource_path("topRightD.bmp")), cv2.IMREAD_COLOR)
   bottomRightD = cv2.imread(str(resource_path("bottomRightD.bmp")), cv2.IMREAD_COLOR)
@@ -56,12 +52,6 @@ if __name__ == "__main__":
   topRightW = cv2.imread(str(resource_path("topRightW.bmp")), cv2.IMREAD_COLOR)
   bottomRightW = cv2.imread(str(resource_path("bottomRightW.bmp")), cv2.IMREAD_COLOR)
   bottomLeftW = cv2.imread(str(resource_path("bottomLeftW.bmp")), cv2.IMREAD_COLOR)
-
-  # Slightly blur white images for less irritation by texture or background noise
-  topLeftW = cv2.medianBlur(topLeftW, 5)
-  topRightW = cv2.medianBlur(topRightW, 5)
-  bottomRightW = cv2.medianBlur(bottomRightW, 5)
-  bottomLeftW = cv2.medianBlur(bottomLeftW, 5)
 
   # Store width and height since we will need it a few times
   height, width = topLeftD.shape[:2]
@@ -95,31 +85,41 @@ if __name__ == "__main__":
   # Debug info, display images
   #show_images([topCropD, rightCropD, bottomCropD, leftCropD])
 
+  # Convert images to grayscale f32 because we need 1 intensity channel for fft
+  topCropDG = np.float32(convert_image_rgb2gray(topCropD)) / 255
+  rightCropDG = np.float32(convert_image_rgb2gray(rightCropD)) / 255
+  bottomCropDG = np.float32(convert_image_rgb2gray(bottomCropD)) / 255
+  leftCropDG = np.float32(convert_image_rgb2gray(leftCropD)) / 255
+
+  topCropWG = np.float32(convert_image_rgb2gray(topCropW)) / 255
+  rightCropWG = np.float32(convert_image_rgb2gray(rightCropW)) / 255
+  bottomCropWG = np.float32(convert_image_rgb2gray(bottomCropW)) / 255
+  leftCropWG = np.float32(convert_image_rgb2gray(leftCropW)) / 255
+
+  # Debug info, display images
+  #show_images([topCropDG, rightCropDG, bottomCropDG, leftCropDG])
+
+  # Slightly blur white images for less irritation by texture or background noise
+  topCropWG = cv2.medianBlur(topCropWG, 5)
+  rightCropWG = cv2.medianBlur(rightCropWG, 5)
+  bottomCropWG = cv2.medianBlur(bottomCropWG, 5)
+  leftCropWG = cv2.medianBlur(leftCropWG, 5)
+
   # Normalize images for brightness gradient
-  topCropN = np.float32(topCropD / topCropW)
-  rightCropN = np.float32(rightCropD / rightCropW)
-  bottomCropN = np.float32(bottomCropD / bottomCropW)
-  leftCropN = np.float32(leftCropD / leftCropW)
+  topCropN = np.float32(topCropDG / topCropWG)
+  rightCropN = np.float32(rightCropDG / rightCropWG)
+  bottomCropN = np.float32(bottomCropDG / bottomCropWG)
+  leftCropN = np.float32(leftCropDG / leftCropWG)
 
   # Debug info, display images
   #show_images([topCropN, rightCropN, bottomCropN, leftCropN])
-
-  # Convert images to grayscale f32 because we need 1 intensity channel for dft
-  # @TODO maybe manually do this step to achieve more consistent results (discard values > 255, take max value of remaining channels)
-  topCropNG = np.float32(cv2.cvtColor(topCropN, cv2.COLOR_RGB2GRAY))
-  rightCropNG = np.float32(cv2.cvtColor(rightCropN, cv2.COLOR_RGB2GRAY))
-  bottomCropNG = np.float32(cv2.cvtColor(bottomCropN, cv2.COLOR_RGB2GRAY))
-  leftCropNG = np.float32(cv2.cvtColor(leftCropN, cv2.COLOR_RGB2GRAY))
-
-  # Debug info, display images
-  show_images([topCropNG, rightCropNG, bottomCropNG, leftCropNG])
 
   # Calculate gradient
   a = 15 # Distance from lense to object in mm
   b = 21 # Distance from LED to lense (radius)
   ratio = 4 / 3 # Ratio of the source image
-  cropHeight, cropWidth = topCropNG.shape # Width and height of the cropped image
-  magnification = 70.4 # Maginification of the microscope
+  cropHeight, cropWidth = topCropN.shape # Width and height of the cropped image
+  magnification = 68.2 # Maginification of the microscope
   factor = 390.72 / magnification / width # Size of a pixel in mm (Full image is 390.72mm wide on magnification 1)
   #focalLength = 40 # Focal length of the microscope
   
@@ -142,12 +142,12 @@ if __name__ == "__main__":
   #wy = (wy ** 2 - b ** 2 + a ** 2) / (2 * a * b)
   #wy = np.sqrt(wy + 1) + wy
   
-  dzdx = (leftCropNG - rightCropNG) / (leftCropNG + rightCropNG) / wx
-  dzdy = (topCropNG - bottomCropNG) / (topCropNG + bottomCropNG) / wy
+  dzdx = (leftCropN - rightCropN) / (leftCropN + rightCropN) / wx
+  dzdy = (topCropN - bottomCropN) / (topCropN + bottomCropN) / wy
 
   # Debug info, display images
   #show_images([dzdx, dzdy])
-  
+
   # Debug info, normalize and write gradient images
   dzdxNormalized, dzdxMinValue, dzdxMaxValue = normalize_image(dzdx)
   dzdyNormalized, dzdyMinValue, dzdyMaxValue = normalize_image(dzdy)
