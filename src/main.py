@@ -115,7 +115,7 @@ if __name__ == "__main__":
   #show_images([topCropN, rightCropN, bottomCropN, leftCropN])
 
   # Calculate gradient
-  a = 15 # Distance from lense to object in mm
+  a = 15 # Distance from LED to object surface in mm
   b = 21 # Distance from LED to lense (radius)
   ratio = 4 / 3 # Ratio of the source image
   cropHeight, cropWidth = topCropN.shape # Width and height of the cropped image
