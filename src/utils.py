@@ -85,15 +85,6 @@ def convert_image_rgb2gray(img):
   result = np.zeros(img.shape[:2], np.uint8)
 
   def clipped_value(values: np.ndarray):
-    clipped = [x for x in values if x <= 255 and x >= 0]
+    return np.max(np.minimum(np.maximum(values, 0), 255), axis=2)
 
-    if len(clipped) == 0:
-      return 0
-
-    return max(clipped)
-
-  for y in range(img.shape[0]):
-    for x in range(img.shape[1]):
-      result[y,x] = clipped_value(img[y,x])
-
-  return result
+  return clipped_value(img)
