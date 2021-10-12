@@ -3,7 +3,6 @@ import pathlib
 
 import cv2
 import imutils
-from numpy import ndarray
 import numpy as np
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
@@ -28,6 +27,12 @@ def resource_path(relative_path: str):
   return base_path / "res" / relative_path
 
 def show_images(images: list, scale: float = None):
+  """Shows a list of images numbered 0..n and waits for a keypress to continue.
+
+  Args:
+      images (list): The list of images to display
+      scale (float, optional): A scale value for the displayed images. Defaults to None.
+  """
   for i, image in enumerate(images):
     if scale is None:
       cv2.imshow(f"{i}", image)
@@ -36,7 +41,7 @@ def show_images(images: list, scale: float = None):
 
   cv2.waitKey()
 
-def scale_image(img: ndarray, scale: float):
+def scale_image(img: np.ndarray, scale: float):
   """Scales an image by a given scale value equally in vertical and horizontal direction.
 
   Args:
@@ -48,23 +53,54 @@ def scale_image(img: ndarray, scale: float):
   """
   return cv2.resize(img, ((int) (img.shape[1] * scale), (int) (img.shape[0] * scale)))
 
-def crop_image(img: ndarray, position: tuple, width: int, height: int):
+def crop_image(img: np.ndarray, position: tuple, width: int, height: int):
+  """Crops a given image in a rectangle shape starting from the given position with a width and height.
+
+  Args:
+      img (numpy.ndarray): The input image
+      position (tuple): The x and y position as tuple representing the top-left corner of the cropped rectangle
+      width (int): The width of the cropped image
+      height (int): The height of the cropped image
+
+  Returns:
+      numpy.ndarray: The cropped image
+  """
   return img[position[1]:position[1] + height, position[0]:position[0] + width]
 
-def crop_image_centered(img: ndarray, width: int, height: int):
+def crop_image_centered(img: np.ndarray, width: int, height: int):
+  """Crops a given image in a centered position.
+
+  Args:
+      img (numpy.ndarray): The input image
+      width (int): The width of the cropped image
+      height (int): The height of the cropped image
+
+  Returns:
+      numpy.ndarray: The cropped image 
+  """
   position = ((img.shape[1] // 2) - (width // 2), (img.shape[0] // 2) - (height // 2))
   
   return crop_image(img, position, width, height)
 
-def plot_image_realtime(img):
-  assert len(img.shape) == 2, "Image has to have 2 channels"
+def plot_image_realtime(img: np.ndarray):
+  """Plots a given image using a realtime method (plotly library in this case).
+
+  Args:
+      img (numpy.ndarray): The input image to be plotted (1 Channel)
+  """
+  assert len(img.shape) == 2, "Image has to have 1 channels"
 
   # https://plotly.com/python/3d-surface-plots/
   fig = go.Figure(data=[go.Surface(z=img)])
   fig.show()
 
-def plot_image(img):
-  assert len(img.shape) == 2, "Image has to have 2 channels"
+def plot_image(img: np.ndarray):
+  """Plots a given image using a non-realtime suited method (matplotlib).
+
+  Args:
+      img (numpy.ndarray): The input image to be plotted (1 Channel)
+  """
+  assert len(img.shape) == 2, "Image has to have 1 channels"
 
   # https://stackoverflow.com/questions/31805560/how-to-create-surface-plot-from-greyscale-image-with-matplotlib
   # This approach is very slow, need to look for a more realtime oriented way of doing things
@@ -79,9 +115,18 @@ def plot_image(img):
 
   plt.show()
 
-def convert_image_rgb2gray(img):
-  assert len(img.shape) == 3, "Image has to have 3 channels"
+def convert_image_rgb2gray(img: np.ndarray):
+  """Converts an RGB image to a grayscale image while discarding values outside the range of 0 and 255 and taking only the values within the valid range.
 
+  Args:
+      img (numpy.ndarray): The RGB input image
+
+  Returns:
+      numpy.ndarray: The grayscale image with only 1 channel
+  """
+  assert len(img.shape) > 2, "Image cannot be grayscale"
+  assert img.shape[2] == 3, "Image has to have 3 channels"
+ 
   result = np.zeros(img.shape[:2], np.uint8)
 
   def clipped_value(values: np.ndarray):
@@ -91,6 +136,14 @@ def convert_image_rgb2gray(img):
 
 
 def normalize_image(img: np.ndarray):
+  """Normalize an images values up to 0..255 (Previous max value will be 255 afterwards).
+
+  Args:
+      img (numpy.ndarray): The input image
+
+  Returns:
+      tuple(numpy.ndarray, int): A tuple containing the input image and the value by which it has been scaled (Previous max value) 
+  """
   minValue = img.min()
   maxValue = img.max()
   result = np.float32((img - minValue) * (255 / (maxValue - minValue)))
